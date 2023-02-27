@@ -79,6 +79,8 @@ begin
       fromLatLng := LatLngFromStr(args^.FromLatLng);
       toLatLng := LatLngFromStr(args^.ToLatLng);
 
+      WriteLn(FloatToStr(AbsoluteDistance(fromLatLng, toLatLng)));
+
     except
         on E : EInvalidArguments do begin
           WriteLn(e.Message);
