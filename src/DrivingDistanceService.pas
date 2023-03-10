@@ -1,64 +1,57 @@
 unit DrivingDistanceService;
 
+{$mode objfpc}{$H+}
+
 interface 
 
-uses fphttpclient;
+uses SysUtils, FPHttpClient, LatLng, FPJSON;
 
 type
-  HttpGetClient = interface
-    function Get (url: String): String;
-  end;
-
-  THttpGetClient = class(HttpGetClient)
-  private 
-    FHttpClient : TFPHttpClient; 
+  TDrivingDistanceService = class
   public
     constructor Create;
     destructor Destroy; override;
-    function Get (url: String): String;
-  end;
-  
-  TDrivingDistanceService = class
-  private
-    FHttpGetClient: HttpGetClient;
-  public
-    constructor Create(AHttpGetClient: HttpGetClient); overload;
-    destructor Destroy; override;
-    function DrivingDistance(from: TLatLng; to: TLatLng): Kilometers;
+    function DrivingDistance(from: TLatLng; destination: TLatLng): Kilometers;
   end;
 
   TDrivingDistance = Kilometers;
+  EDrivingDistanceNotFoundException = Class(Exception);
 
 implementation
 
-constructor THttpGetClient.Create;
+
+constructor TDrivingDistanceService.Create; 
 begin
-  FHttpClient := TFPHttpClient.Create(Nil);
 end;
 
-destructor THttpGetClient.Destroy;
+destructor TDrivingDistanceService.Destroy;
 begin
-  FreeAndNil(FHttpClient);
 end;
 
-function THttpGetClient.Get (url: String): String;
+function TDrivingDistanceService.DrivingDistance(from: TLatLng; destination: TLatLng): Kilometers;
 var 
-  Content: String;
+  Protocol, Domain, Path, PathParams, Url,Content : String;
+  Data: TJSONData;
+  DistanceData: TJSONData;
 begin
-  Content := FHttpClient.Get(url);
-end;
+  try
+    Protocol := 'http://';
+    Domain := 'router.project-osrm.org';
+    Path := '/route/v1/driving/';
+    PathParams := ''+Format(from)+';'+Format(destination);
 
-constructor TDrivingDistanceService.(AHttpGetClient: HttpGetClient);
-begin
-  Assert(AHttpGetClient <> Nil, 'HttpGetClient is nil');
-  FHttpGetClient := AHttpGetClient;
-end;
+    // Concatenate the different components to form the complete URL
+    URL := Protocol + Domain + Path + PathParams;
+    Content := TFPCustomHTTPClient.SimpleGet(URL);
+    Data := GetJSON(Content);
+    DistanceData := Data.FindPath('routes[0].distance');
 
-function TDrivingDistanceService.DrivingDistance(from: TLatLng; to: TLatLng): Kilometers;
-var 
-  DrivingDistance : Kilometers;
-begin
-  Content := FHttpClient.Get(url);
+    if DistanceData = Nil then raise EDrivingDistanceNotFoundException.Create('Can not find driving distance.');
+
+    DrivingDistance := DistanceData.AsFloat / 1000;
+  finally
+    FreeAndNil(Data);
+  end;
 end;
 
 end.

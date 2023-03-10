@@ -5,7 +5,7 @@ unit LatLng;
 interface
 
 uses 
-  Types, SysUtils, StrUtils;
+  Types, SysUtils, StrUtils, Math;
 
 type 
   TLatLng = record
@@ -18,6 +18,8 @@ type
 
 function LatLngFromStr(s: String): TLatLng;
 function AbsoluteDistance(aFrom: TLatLng; aTo: TLatLng): Kilometers;
+function Format(l: TLatLng): String;
+function DecimalPlaces(r: Real; d: Integer): Real;
 
 implementation
 
@@ -40,12 +42,27 @@ function AbsoluteDistance(aFrom: TLatLng; aTo: TLatLng): Kilometers;
 var
   xDisplacement : real;
   yDisplacement : real;
-  AbsDistance : Kilometers;
 begin
   xDisplacement := Abs(aFrom.Latitude - aTo.Latitude);
   yDisplacement := Abs(aFrom.Longitude - aTo.Longitude);
   {Each degree of lat/lng is rougly 111km}
-  AbsDistance := 111 * (xDisplacement + yDisplacement);
+  AbsoluteDistance := 111 * (xDisplacement + yDisplacement);
+end;
+
+function Format(l: TLatLng): String;
+begin
+  {probably want to trunc the real numbers here}
+  Format := ''+FloatToStr(DecimalPlaces(l.Latitude, 6))+','+FloatToStr(DecimalPlaces(l.Longitude,6));
+end;
+
+function DecimalPlaces(r: Real; d: Integer): Real;
+var
+  factor: Real;
+begin
+  // Calculate the factor to multiply by
+  factor := Power(10, d);
+  // Truncate the number to the specified number of decimal places
+  result := Trunc(r * factor) / factor;
 end;
 
 end.

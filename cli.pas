@@ -1,7 +1,7 @@
 program RoadNetworkEfficiency;
 
 {$mode objfpc}{$H+}
-uses SysUtils, LatLng;
+uses SysUtils, LatLng, DrivingDistanceService;
 
 type 
   Arguments = record
@@ -66,6 +66,8 @@ var
   
   fromLatLng: TLatLng;
   toLatLng: TLatLng;
+  drivingDistanceService: TDrivingDistanceService;
+  drivingDistance: Kilometers;
 begin
   New(args);
   try
@@ -79,8 +81,11 @@ begin
       fromLatLng := LatLngFromStr(args^.FromLatLng);
       toLatLng := LatLngFromStr(args^.ToLatLng);
 
-      WriteLn(FloatToStr(AbsoluteDistance(fromLatLng, toLatLng)));
+      WriteLn('Absolute Distance: '+FloatToStr(AbsoluteDistance(fromLatLng, toLatLng)));
 
+      drivingDistanceService := TDrivingDistanceService.Create;
+      drivingDistance := drivingDistanceService.DrivingDistance(fromLatLng, toLatLng);
+      WriteLn('Driving Distance: '+FloatToStr(drivingDistance));
     except
         on E : EInvalidArguments do begin
           WriteLn(e.Message);
@@ -90,5 +95,6 @@ begin
     end;
   finally
     Dispose(args);
+    FreeAndNil(drivingDistanceService);
   end;
 end.
